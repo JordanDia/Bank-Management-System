@@ -1,111 +1,120 @@
 #include <iostream>
-#include <string>
-#include <fstream>
-#include <vector>
 
-class Account
-{
-private:
-	std::string m_Username;
-	std::string m_Password;
-	std::string m_Filepath;
-public:
-	static Account* CreateAccount(const std::string& username, const std::string& password)
-	{
-		// We need to check if the username is taken
-		// We will attempt to open the file.
-		std::string filepath = "database\\" + username + ".txt";
-		std::ifstream file(filepath);
-
-		if (!file)
-			return new Account(username, password, filepath);
-		else
-			return nullptr;
-	}
-
-	std::string GetUsername()
-	{
-		return m_Username;
-	}
-
-	std::string GetPassword()
-	{
-		return m_Password;
-	}
-
-	std::string GetFilepath()
-	{
-		return m_Filepath;
-	}
-private:
-	Account(const std::string& username, const std::string& password, const std::string& filepath)
-		: m_Username(username), m_Password(password), m_Filepath(filepath)
-	{
-		CreateFile();
-	}
-
-	void CreateFile()
-	{
-		std::ofstream file;
-		file.open(m_Filepath);
-		file << m_Username << '\n' << m_Password << '\n' << 0;
-		file.close();
-	}
-};
+#include "Utilities.h"
 
 void Menu()
 {
-	std::cout << "1. Open an account\n";
-	std::cout << "2. Login\n";
-	std::cout << "3. Deposit\n";
-	std::cout << "4. Withdraw\n";
-	std::cout << "5. Exit\n";
+	std::cout << "\n\t1. Open an account\n";
+	std::cout << "\t2. Show account details\n";
+	std::cout << "\t3. Deposit\n";
+	std::cout << "\t4. Withdraw\n";
 }
 
 int main()
 {
-	int choice = 0;
-	// We store them in a vector to delete them at the end of our program.
-	std::vector<Account*> accounts;
+	int choice = -1;
+
 	do
 	{
-		std::cout << '\n';
+		system("cls");
 		Menu();
-		std::cout << "Select from the menu -> ";
+		std::cout << "\nSelect from the menu (0 to exit) -> ";
 		std::cin >> choice;
-
+		choice = (int)choice;
+		std::cout << '\n';
 		switch (choice)
 		{
 		case 1:
 		{
+			// Create account
+
 			std::string username;
-			std::cout << "Enter a username -> ";
-			std::cin >> username;
-
 			std::string password;
-			std::cout << "Enter a password -> ";
-			std::cin >> password;
+			PromptUsernamePassword(username, password);
 
-			Account* account = Account::CreateAccount(username, password);
-			if (account == nullptr)
+			bool success = CreateFile(username, password);
+			if (!success)
 				std::cout << "Username taken!\n";
 			else
-				accounts.push_back(account);
+				std::cout << "Account created!\n";
+
+			ContinueMessage("Press enter to continue...");
 			break;
 		}
 		case 2:
+		{
+			// Show account details
+
+			std::string username;
+			std::string password;
+			PromptUsernamePassword(username, password);
+			bool success = ValidateLogin(username, password);
+			
+			if (success)
+			{
+				PrintDetails(username);
+				ContinueMessage("Press enter to continue...");
+			}
+			else
+			{
+				ContinueMessage("Invalid credentials. Press enter to continue...");
+			}
+			
 			break;
+		}
 		case 3:
+		{
+			// Deposit
+
+			std::string username;
+			std::string password;
+			PromptUsernamePassword(username, password);
+			bool success = ValidateLogin(username, password);
+
+			if (success)
+			{
+				double amount;
+				std::cout << "Deposit amount -> ";
+				std::cin >> amount;
+				std::cout << '\n';
+				Deposit(username, amount);
+				ContinueMessage("Press enter to continue...");
+			}
+			else
+			{
+				ContinueMessage("Invalid credentials. Press enter to continue...");
+			}
+
 			break;
+		}
 		case 4:
+		{
+			// Withdraw
+
+			std::string username;
+			std::string password;
+			PromptUsernamePassword(username, password);
+			bool success = ValidateLogin(username, password);
+
+			if (success)
+			{
+				double amount;
+				std::cout << "Withdraw amount -> ";
+				std::cin >> amount;
+				std::cout << '\n';
+				Withdraw(username, amount);
+				ContinueMessage("Press enter to continue...");
+			}
+			else
+			{
+				ContinueMessage("Invalid credentials. Press enter to continue...");
+			}
 			break;
-		case 5:
-			break;
+		}
 		default:
 			break;
 		}
-	} while (choice != 5);
+	} while (choice != 0);
 
-	accounts.clear();
 	return 0;
 }
